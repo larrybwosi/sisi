@@ -51,7 +51,7 @@ const Hero = () => {
   ];
 
   return (
-    <div ref={ref} className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4 sm:p-8 pt-24 overflow-hidden">
+    <div ref={ref} className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4 sm:p-8 pt-24 mb-20 overflow-hidden">
       <div className="container mx-auto flex flex-col lg:flex-row items-center">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
@@ -99,7 +99,7 @@ const Hero = () => {
             </motion.button>
           </div>
           <motion.div 
-            className="flex items-center text-green-700 gsap-fade-in"
+            className="flex items-center text-green-700 gsap-fade-in mt-20 mb-5 md:mb-0"
           >
             <Sprout className="mr-3 text-green-500" />
             <span>Committed to sustainable farming and biodiversity</span>
@@ -130,13 +130,13 @@ const Hero = () => {
           </div>
         </motion.div>
       </div>
-      <AnimatePresence>
+      <motion.div>
         {typeof window !== 'undefined' && window.innerWidth < 1024 && (
           <motion.div
-            className="fixed bottom-0 left-0 right-0 bg-white bg-opacity-90 backdrop-blur-md p-4 shadow-lg"
-            initial={{ y: 100 }}
-            animate={{ y: 0 }}
-            exit={{ y: 100 }}
+            className="absolute bottom-2 left-0 right-0 w-full bg-white bg-opacity-90 backdrop-blur-md p-4 shadow-lg mt-10"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
             transition={{ type: 'spring', stiffness: 100 }}
           >
             <h3 className="text-lg font-semibold text-green-800 mb-2">Our Organic Selection</h3>
@@ -150,7 +150,7 @@ const Hero = () => {
             </div>
           </motion.div>
         )}
-      </AnimatePresence>
+      </motion.div>
     </div>
   );
 };

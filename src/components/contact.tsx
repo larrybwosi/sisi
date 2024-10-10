@@ -1,33 +1,74 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, useInView, useAnimation } from 'framer-motion';
 import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
-gsap.registerPlugin(ScrollTrigger);
+// Assuming content is imported correctly
+import content from '../lib/content.json';
+
+interface FormData {
+  name: string;
+  email: string;
+  phone: string;
+  subject: string;
+  message: string;
+}
 
 const ContactForm: React.FC = () => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     name: '',
     email: '',
-    message: '',
+    phone: '',
+    subject: '',
+    message: ''
   });
 
-  const formRef = useRef(null);
-  const isInView = useInView(formRef, { once: true, amount: 0.3 });
-  const controls = useAnimation();
+  const [isClient, setIsClient] = useState(false);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const leftColumnRef = useRef<HTMLDivElement>(null);
+  const rightColumnRef = useRef<HTMLDivElement>(null);
+  const formFieldsRef = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
-    if (isInView) {
-      controls.start('visible');
-      gsap.fromTo(
-        '.form-field',
-        { opacity: 0, y: 20 },
-        { opacity: 1, y: 0, duration: 0.8, stagger: 0.2, ease: 'back.out(1.7)' }
-      );
-    }
-  }, [isInView, controls]);
+    setIsClient(true);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    if (typeof window !== 'undefined') {
+      // GSAP animations
+      const tl = gsap.timeline();
+
+      tl.from(containerRef.current, {
+        opacity: 0,
+        duration: 1,
+        ease: 'power3.out'
+      });
+
+      tl.from(leftColumnRef.current, {
+        x: -50,
+        opacity: 0,
+        duration: 0.8,
+        ease: 'power3.out'
+      }, "-=0.5");
+
+      tl.from(rightColumnRef.current, {
+        x: 50,
+        opacity: 0,
+        duration: 0.8,
+        ease: 'power3.out'
+      }, "-=0.5");
+
+      formFieldsRef.current.forEach((field) => {
+        if (field) {
+          tl.from(field, {
+            y: 20,
+            opacity: 0,
+            duration: 0.5,
+            ease: 'power3.out'
+          }, "-=0.3");
+        }
+      });
+    }
+  }, []);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prevState => ({
       ...prevState,
@@ -38,118 +79,95 @@ const ContactForm: React.FC = () => {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     console.log('Form submitted:', formData);
-  };
+    // Here you would typically send the form data to a server
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
+    if (typeof window !== 'undefined') {
+      // Animation for form submission
+      gsap.to(formFieldsRef.current, {
+        y: -10,
+        opacity: 0,
+        stagger: 0.1,
         duration: 0.5,
-        staggerChildren: 0.1
-      }
+        ease: 'power3.out',
+        onComplete: () => {
+          gsap.to(formFieldsRef.current, {
+            y: 0,
+            opacity: 1,
+            stagger: 0.1,
+            duration: 0.5,
+            ease: 'power3.out'
+          });
+        }
+      });
     }
   };
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { type: 'spring', stiffness: 100 }
-    }
-  };
+  if (!isClient) {
+    return null; // or a loading spinner
+  }
 
   return (
-    <section ref={formRef} className="bg-gradient-to-br from-green-100 via-emerald-200 to-teal-300 py-24 px-4 sm:px-6 lg:px-8 min-h-screen flex items-center">
-      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-between">
-        <motion.div
-          className="lg:w-1/2 mb-12 lg:mb-0"
-          variants={containerVariants}
-          initial="hidden"
-          animate={controls}
-        >
-          <motion.h2 variants={itemVariants} className="text-6xl font-extrabold text-emerald-800 mb-8 leading-tight">
-            Join the SisiVillage Family!
-          </motion.h2>
-          <motion.p variants={itemVariants} className="text-2xl text-teal-700 mb-8 leading-relaxed">
-            Be the first to know about our exclusive offers, new harvests, and sustainable farming tips. Sign up now and receive:
-          </motion.p>
-          <motion.ul variants={containerVariants} className="text-emerald-700 text-xl mb-8 list-none space-y-4">
-            {[
-              '15% off your first order of premium SisiVillage produce',
-              'Monthly newsletter with farm-to-table recipes and health benefits',
-              'VIP invitations to our farm tours and seasonal festivals',
-              'Early access to limited edition artisanal products'
-            ].map((item, index) => (
-              <motion.li key={index} variants={itemVariants} className="flex items-center">
-                <svg className="w-6 h-6 mr-2 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                {item}
-              </motion.li>
+    <div ref={containerRef} className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 bg-gradient-to-br from-green-50 to-blue-50 rounded-lg shadow-lg">
+      <div className="flex flex-col lg:flex-row space-y-8 lg:space-y-0 lg:space-x-8">
+        <div ref={leftColumnRef} className="lg:w-1/2">
+          <h1 className="text-3xl font-bold text-gray-800 mb-4 bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-blue-600">{content.pageTitle}</h1>
+          <p className="mb-6 text-gray-600">{content.pageDescription}</p>
+          <h2 className="text-2xl font-semibold text-gray-700 mb-2">Our Products:</h2>
+          <ul className="list-disc pl-5 mb-6 text-gray-600">
+            {content.products.map((product, index) => (
+              <li key={index} className="mb-1 hover:text-green-600 transition-colors duration-300">{product}</li>
             ))}
-          </motion.ul>
-          <motion.p variants={itemVariants} className="text-teal-700 text-2xl font-semibold italic">
-            Don&apos;t miss out on nature&apos;s bounty – join our family today!
-          </motion.p>
-        </motion.div>
-        <div className="lg:w-1/2 flex flex-col items-center">
-          <motion.form
-            onSubmit={handleSubmit}
-            className="bg-white bg-opacity-80 backdrop-filter backdrop-blur-lg shadow-2xl rounded-3xl p-10 w-full max-w-lg"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          >
-            <div className="mb-8 form-field">
-              <label htmlFor="name" className="block text-emerald-700 font-bold mb-2 text-lg">Name</label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border-2 border-emerald-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition duration-300 text-lg bg-white bg-opacity-50"
-                required
-              />
-            </div>
-            <div className="mb-8 form-field">
-              <label htmlFor="email" className="block text-emerald-700 font-bold mb-2 text-lg">Email</label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border-2 border-emerald-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition duration-300 text-lg bg-white bg-opacity-50"
-                required
-              />
-            </div>
-            <div className="mb-8 form-field">
-              <label htmlFor="message" className="block text-emerald-700 font-bold mb-2 text-lg">Message (Optional)</label>
+          </ul>
+          <h2 className="text-2xl font-semibold text-gray-700 mb-2">Benefits of Contacting Us:</h2>
+          <ul className="list-disc pl-5 text-gray-600">
+            {content.benefits.map((benefit, index) => (
+              <li key={index} className="mb-1 hover:text-blue-600 transition-colors duration-300">{benefit}</li>
+            ))}
+          </ul>
+        </div>
+        <div ref={rightColumnRef} className="lg:w-1/2">
+          <h2 className="text-2xl font-semibold text-gray-700 mb-4">Contact Us</h2>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {(['name', 'email', 'phone', 'subject'] as const).map((field, index) => (
+              <div key={field} ref={el => formFieldsRef.current[index] = el} className="transition-all duration-300 ease-in-out transform hover:scale-105">
+                <label htmlFor={field} className="block text-sm font-medium text-gray-700">
+                  {field.charAt(0).toUpperCase() + field.slice(1)}:
+                </label>
+                <input
+                  type={field === 'email' ? 'email' : 'text'}
+                  id={field}
+                  name={field}
+                  value={formData[field]}
+                  onChange={handleInputChange}
+                  required={field !== 'phone'}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-300 focus:ring focus:ring-green-200 focus:ring-opacity-50 transition-colors duration-300"
+                />
+              </div>
+            ))}
+            <div ref={el => formFieldsRef.current[4] = el} className="transition-all duration-300 ease-in-out transform hover:scale-105">
+              <label htmlFor="message" className="block text-sm font-medium text-gray-700">
+                Message:
+              </label>
               <textarea
                 id="message"
                 name="message"
+                rows={5}
                 value={formData.message}
-                onChange={handleChange}
-                rows={4}
-                className="w-full px-4 py-3 border-2 border-emerald-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition duration-300 text-lg bg-white bg-opacity-50"
+                onChange={handleInputChange}
+                required
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-300 focus:ring focus:ring-green-200 focus:ring-opacity-50 transition-colors duration-300"
               ></textarea>
             </div>
-            <motion.button
-              whileHover={{ scale: 1.05, boxShadow: "0 0 15px rgba(16, 185, 129, 0.5)" }}
-              whileTap={{ scale: 0.95 }}
+            <button
               type="submit"
-              className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold py-4 px-6 rounded-lg hover:from-emerald-600 hover:to-teal-700 transition duration-300 shadow-lg text-xl relative overflow-hidden group"
+              className="w-full bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition-all duration-300 ease-in-out transform hover:scale-105"
             >
-              <span className="relative z-10">Join Our SisiVillage Family!</span>
-              <span className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-300"></span>
-            </motion.button>
-          </motion.form>
+              Send Message
+            </button>
+          </form>
         </div>
       </div>
-    </section>
+    </div>
   );
 };
 
